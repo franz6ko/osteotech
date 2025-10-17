@@ -4,3 +4,12 @@ Gemini dice que solo muestra 17 puntos pero en otro lado vi 33
 Sugiere usar BlazePose pero no parece 
 
 Modelos de pose: https://www.tensorflow.org/js/models
+
+Sugerencias de Tincho:
+tirarle a gemini que evalue un video como una esoteopata y construya una metrica para evaluar cierto ejercicio que despues pueda usar los modelos de pose
+explicarle lo que tenemos armado para que nos entregue
+que la osteopata valide
+pensar como es el proceso para agregar ejercicis nuevos
+
+Sugerencias de:
+Grabar mini videos para ver progreso a lo largo de los dias

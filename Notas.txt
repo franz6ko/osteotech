@@ -1,4 +1,6 @@
 . Hicimos una v0 usando MediaPipe el codigo lo genero Gemini.
 Por ahi tienen la limitacion de que no muestra los dedos
 Gemini dice que solo muestra 17 puntos pero en otro lado vi 33
-Sugiere usar BlazePose pero no parece funcionar
+Sugiere usar BlazePose pero no parece 
+
+Modelos de pose: https://www.tensorflow.org/js/models

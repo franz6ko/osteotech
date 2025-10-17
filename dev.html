@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FisioApp - Monitor de Ejercicios</title>
+    <!-- Carga de Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo base para el canvas y video */
+        .video-container {
+            position: relative;
+            /* Eliminamos max-width aquí para que la columna flex lo controle */
+            margin: 0 auto;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        #videoElement, #canvasElement {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        #canvasElement {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans p-4 sm:p-8">
+    
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-blue-600 mb-2">FisioMonitor MVP</h1>
+            <p class="text-gray-600">Análisis de postura y ángulos en tiempo real.</p>
+        </header>
+
+        <div id="status-box" class="mb-6 p-4 rounded-lg text-sm font-medium bg-yellow-100 text-yellow-800">
+            Cargando modelo de Pose...
+        </div>
+
+        <!-- CONTENEDOR FLEX PRINCIPAL: Columna para móviles, Fila para escritorio -->
+        <div class="flex flex-col md:flex-row md:space-x-6">
+            
+            <!-- COLUMNA IZQUIERDA: Video (2/3 de ancho en escritorio) -->
+            <div class="md:w-2/3">
+                <div class="video-container">
+                    <!-- El video muestra la transmisión de la cámara -->
+                    <video id="videoElement" playsinline style="transform: scaleX(-1);" autoplay muted></video>
+                    <!-- El canvas se superpone para dibujar los puntos clave de la pose -->
+                    <canvas id="canvasElement"></canvas>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Controles y Métricas (1/3 de ancho en escritorio) -->
+            <div class="md:w-1/3 mt-6 md:mt-0">
+                
+                <!-- Botones -->
+                <div class="flex flex-col gap-4 mb-6">
+                    <button id="startButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-green-200" disabled>
+                        1. Iniciar Cámara
+                    </button>
+                    <input type="file" id="fileInput" accept="video/*" class="hidden">
+                    <label for="fileInput" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-blue-200 text-center cursor-pointer">
+                        2. Cargar Video
+                    </label>
+                </div>
+
+                <!-- Métricas -->
+                <section class="p-4 bg-white rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Métricas de Ángulo (Demo)</h2>
+                    <div id="metrics" class="grid grid-cols-1 gap-3">
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <p class="text-sm text-gray-500">Ángulo Codo Derecho:</p>
+                            <p id="angleRightElbow" class="text-2xl font-bold text-indigo-600">--</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <p class="text-sm text-gray-500">Mensaje de Calidad (Codo):</p>
+                            <p id="qualityMessage" class="text-lg font-semibold text-gray-900">Esperando pose...</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <p class="text-sm text-gray-500">Elevación Hombro (Check):</p>
+                            <p id="shoulderElevationCheck" class="text-2xl font-bold text-gray-400">--</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+            
+        </div>
+        <!-- Fin Contenedor Flex Principal -->
+
+    </div>
+
+    <!-- Carga de Librerías de Pose Estimation -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.2.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.0.0/dist/pose-detection.min.js"></script>
+    
+    <script>
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvasElement');
+        const canvasCtx = canvasElement.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        const fileInput = document.getElementById('fileInput');
+        const statusBox = document.getElementById('status-box');
+        
+        // Variables de estado
+        let detector;
+        let animationFrameId;
+        let isProcessing = false;
+
+        // Definición de conexiones del esqueleto para MoveNet
+        const MOVENET_CONNECTIONS = [
+            ['left_shoulder', 'right_shoulder'],
+            ['left_shoulder', 'left_elbow'],
+            ['left_elbow', 'left_wrist'],
+            ['right_shoulder', 'right_elbow'],
+            ['right_elbow', 'right_wrist'],
+            ['left_hip', 'right_hip'],
+            ['left_hip', 'left_shoulder'],
+            ['right_hip', 'right_shoulder'],
+            ['left_hip', 'left_knee'],
+            ['left_knee', 'left_ankle'],
+            ['right_hip', 'right_knee'],
+            ['right_knee', 'right_ankle'],
+            ['nose', 'left_eye'],
+            ['nose', 'right_eye'],
+            ['left_eye', 'left_ear'],
+            ['right_eye', 'right_ear'],
+            ['left_shoulder', 'left_hip'],
+            ['right_shoulder', 'right_hip']
+        ];
+
+
+        // --- 1. Inicialización del Modelo ---
+        async function setupDetector() {
+            statusBox.textContent = 'Inicializando el detector MoveNet...';
+            // Recomendación: MoveNet es más rápido que PoseNet para un MVP
+            const model = poseDetection.SupportedModels.MoveNet;
+            const detectorConfig = {
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+                // Puedes probar con modelType.SINGLEPOSE_THUNDER para mayor precisión
+            };
+
+            try {
+                detector = await poseDetection.createDetector(model, detectorConfig);
+                statusBox.className = 'mb-6 p-4 rounded-lg text-sm font-medium bg-green-100 text-green-800';
+                statusBox.textContent = 'Detector de Pose listo. ¡Puedes iniciar la cámara o cargar un video!';
+                startButton.disabled = false;
+            } catch (error) {
+                statusBox.className = 'mb-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800';
+                statusBox.textContent = 'Error al cargar el detector: ' + error.message;
+                console.error("Error al cargar el detector:", error);
+            }
+        }
+
+        // --- 2. Lógica de Pose Detection y Dibujo ---
+
+        function calculateAngle(p1, p2, p3) {
+            // Convierte coordenadas de píxeles a un ángulo en grados
+            const a = Math.sqrt(Math.pow(p2.x - p3.x, 2) + Math.pow(p2.y - p3.y, 2));
+            const b = Math.sqrt(Math.pow(p1.x - p3.x, 2) + Math.pow(p1.y - p3.y, 2));
+            const c = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+            
+            // Ley de Cosenos
+            const angleInRadians = Math.acos((a * a + c * c - b * b) / (2 * a * c));
+            return Math.round(angleInRadians * 180 / Math.PI);
+        }
+
+        function drawSkeleton(ctx, keypoints, connections, color = '#4F46E5', lineWidth = 3) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            
+            // Dibuja las conexiones (huesos)
+            connections.forEach(([p1_name, p2_name]) => {
+                const p1 = keypoints.find(k => k.name === p1_name);
+                const p2 = keypoints.find(k => k.name === p2_name);
+
+                // Solo dibujar si ambos puntos tienen una buena confianza
+                if (p1 && p2 && p1.score > 0.3 && p2.score > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        async function detectPose() {
+            if (!detector || !videoElement.videoWidth || isProcessing) {
+                animationFrameId = requestAnimationFrame(detectPose);
+                return;
+            }
+
+            isProcessing = true;
+            
+            // Dibuja el frame de video
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            
+            try {
+                // Detecta poses
+                const poses = await detector.estimatePoses(videoElement);
+                
+                if (poses.length > 0) {
+                    const pose = poses[0];
+                    const keypoints = pose.keypoints;
+
+                    // Dibuja el esqueleto completo
+                    drawSkeleton(canvasCtx, keypoints, MOVENET_CONNECTIONS);
+
+                    // Dibuja los puntos clave (Keypoints)
+                    keypoints.forEach(keypoint => {
+                        if (keypoint.score > 0.3) { // Umbral de confianza
+                            canvasCtx.beginPath();
+                            canvasCtx.arc(keypoint.x, keypoint.y, 5, 0, 2 * Math.PI);
+                            
+                            // Lógica para pintar los hombros de azul
+                            if (keypoint.name === 'right_shoulder' || keypoint.name === 'left_shoulder') {
+                                canvasCtx.fillStyle = 'blue';
+                            } else {
+                                canvasCtx.fillStyle = 'red';
+                            }
+
+                            canvasCtx.fill();
+                        }
+                    });
+
+                    // Variables para el análisis
+                    const rightShoulder = keypoints.find(k => k.name === 'right_shoulder');
+                    const leftShoulder = keypoints.find(k => k.name === 'left_shoulder');
+                    const rightElbow = keypoints.find(k => k.name === 'right_elbow');
+                    const rightWrist = keypoints.find(k => k.name === 'right_wrist');
+
+                    // --- 2.1. ANÁLISIS DEL ÁNGULO DEL CODO (existente) ---
+                    let angle = '--';
+                    let quality = 'Esperando pose...';
+
+                    if (rightShoulder && rightElbow && rightWrist) {
+                        angle = calculateAngle(rightShoulder, rightElbow, rightWrist);
+                        
+                        // Lógica de validación del ejercicio (DEMO)
+                        if (angle >= 80 && angle <= 100) {
+                            quality = '¡Ángulo Correcto (90°)!';
+                            document.getElementById('qualityMessage').className = 'text-lg font-semibold text-green-600';
+                        } else if (angle < 80) {
+                            quality = 'Ángulo Demasiado Agudo.';
+                            document.getElementById('qualityMessage').className = 'text-lg font-semibold text-orange-600';
+                        } else {
+                            quality = 'Ángulo Demasiado Abierto.';
+                            document.getElementById('qualityMessage').className = 'text-lg font-semibold text-red-600';
+                        }
+                    }
+
+                    document.getElementById('angleRightElbow').textContent = `${angle}°`;
+                    document.getElementById('qualityMessage').textContent = quality;
+
+                    // --- 2.2. ANÁLISIS DE ELEVACIÓN DEL HOMBRO (NUEVO) ---
+                    const shoulderElevationCheckEl = document.getElementById('shoulderElevationCheck');
+                    const MIN_ARM_RAISE_Y = 10; // Mínima diferencia Y para considerar que el brazo está levantándose
+                    const MAX_SHOULDER_LIFT_Y = 20; // Máximo elevación permitida (en píxeles)
+
+                    if (rightShoulder && leftShoulder && rightElbow) {
+                        // Comprobar si el brazo DERECHO se está levantando (codo Y es menor/más alto que hombro Y + un margen)
+                        // NOTA: Y=0 es la parte superior del canvas. Un Y más pequeño significa 'más alto'.
+                        const armIsRaised = (rightShoulder.y - rightElbow.y) > MIN_ARM_RAISE_Y;
+
+                        if (armIsRaised) {
+                            // Check: Si el hombro derecho está significativamente más alto (Y más pequeño) que el hombro izquierdo
+                            if (rightShoulder.y < leftShoulder.y - MAX_SHOULDER_LIFT_Y) {
+                                shoulderElevationCheckEl.textContent = '❌ ¡NO ELEVAR HOMBRO!';
+                                shoulderElevationCheckEl.className = 'text-2xl font-bold text-red-600';
+                            } else {
+                                shoulderElevationCheckEl.textContent = '✅ Hombro Estable.';
+                                shoulderElevationCheckEl.className = 'text-2xl font-bold text-green-600';
+                            }
+
+                        } else {
+                            shoulderElevationCheckEl.textContent = 'Brazos Bajos.';
+                            shoulderElevationCheckEl.className = 'text-2xl font-bold text-gray-400';
+                        }
+                    } else {
+                        shoulderElevationCheckEl.textContent = '--';
+                        shoulderElevationCheckEl.className = 'text-2xl font-bold text-gray-400';
+                    }
+
+                } else {
+                    document.getElementById('qualityMessage').textContent = 'No se detectó ninguna persona.';
+                    document.getElementById('angleRightElbow').textContent = '--';
+                    document.getElementById('qualityMessage').className = 'text-lg font-semibold text-gray-900';
+                    document.getElementById('shoulderElevationCheck').textContent = '--';
+                    document.getElementById('shoulderElevationCheck').className = 'text-2xl font-bold text-gray-400';
+                }
+
+            } catch (error) {
+                console.error("Error durante la detección de pose:", error);
+            } finally {
+                isProcessing = false;
+            }
+            
+            // Sigue procesando el siguiente frame
+            animationFrameId = requestAnimationFrame(detectPose);
+        }
+
+        // --- 3. Gestión de la Interfaz y Eventos ---
+
+        // Configuración de video
+        function setupVideo(source) {
+            videoElement.srcObject = null;
+            videoElement.src = source;
+            videoElement.load();
+        }
+        
+        // Inicia la cámara web
+        startButton.addEventListener('click', async () => {
+            if (isProcessing) return;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    'video': { 
+                        facingMode: 'user' 
+                    } 
+                });
+                
+                videoElement.srcObject = stream;
+                videoElement.addEventListener('loadeddata', () => {
+                    // Ajusta el canvas al tamaño del video una vez que los metadatos estén cargados
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    videoElement.play();
+                    // Inicia el bucle de detección
+                    if (!animationFrameId) {
+                        detectPose();
+                    }
+                }, { once: true });
+
+                statusBox.textContent = 'Cámara iniciada. Analizando pose en tiempo real.';
+                statusBox.className = 'mb-6 p-4 rounded-lg text-sm font-medium bg-blue-100 text-blue-800';
+
+            } catch (err) {
+                statusBox.textContent = 'Error al acceder a la cámara. Asegúrate de dar permisos.';
+                statusBox.className = 'mb-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800';
+                console.error("Error al acceder a la cámara:", err);
+            }
+        });
+
+        // Carga de archivo de video
+        fileInput.addEventListener('change', (event) => {
+            if (isProcessing) return;
+
+            const file = event.target.files[0];
+            if (file) {
+                const videoURL = URL.createObjectURL(file);
+                setupVideo(videoURL);
+
+                videoElement.addEventListener('loadeddata', () => {
+                    // Ajusta el canvas al tamaño del video
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    videoElement.play();
+                    
+                    // Inicia el bucle de detección
+                    if (!animationFrameId) {
+                        detectPose();
+                    }
+
+                    statusBox.textContent = `Video '${file.name}' cargado. Analizando pose...`;
+                    statusBox.className = 'mb-6 p-4 rounded-lg text-sm font-medium bg-blue-100 text-blue-800';
+                }, { once: true });
+            }
+        });
+
+        // Iniciar la configuración del modelo al cargar la ventana
+        window.onload = setupDetector;
+
+        // Limpieza al salir de la página
+        window.onbeforeunload = () => {
+            cancelAnimationFrame(animationFrameId);
+        };
+    </script>
+</body>
+</html>

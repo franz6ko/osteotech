@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OsteoTech - Monitor de Ejercicios</title>
+    <title>Mobilis - Monitor de Ejercicios</title>
     <!-- Carga de Tailwind CSS para estilos rápidos y responsivos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Estilo base para el canvas y video */
+        /* Estilos generales */
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        /* Contenedor del Video (Capa de Fondo) */
         .video-container {
-            position: relative;
-            margin: 0 auto;
-            border-radius: 1.5rem; /* Bordes más redondeados */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); /* Sombra más profunda para destacarlo */
-            /* En pantallas grandes, permitimos que tome una altura cómoda */
-            aspect-ratio: 16 / 9; /* Mantiene una relación de aspecto de video estándar */
         }
         #videoElement, #canvasElement {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Asegura que el video cubra el contenedor */
+            object-fit: cover;
             display: block;
         }
         #canvasElement {
@@ -28,76 +32,131 @@
             top: 0;
             left: 0;
         }
+        /* Estilo Claro / Frosted Glass (Ajustado para MAYOR transparencia) */
+        .overlay-bg {
+            /* Fondo semi-transparente claro: Ajustado a 0.45 de opacidad */
+            background-color: rgba(255, 255, 255, 0.45); 
+            /* Efecto de cristal esmerilado */
+            backdrop-filter: blur(18px); /* Aumentado el blur para suavizar más */
+            -webkit-backdrop-filter: blur(18px);
+            /* Sombra sutil para separar de la base */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+            color: #1F2937; /* Texto oscuro */
+        }
     </style>
 </head>
-<body class="bg-gray-50 font-sans p-4 sm:p-8">
+<body class="bg-gray-900 font-sans h-screen overflow-hidden">
     
-    <!-- Contenedor Principal Ligeramente más ancho -->
-    <div class="max-w-5xl mx-auto"> 
-        <header class="text-center mb-6">
-            <h1 class="text-5xl font-extrabold text-blue-700 mb-1" id="appName">OsteoTech Monitor</h1>
-            <p class="text-gray-600 text-lg">Asistente de corrección de postura en tiempo real.</p>
-        </header>
+    <!-- CONTENEDOR PRINCIPAL DEL VIDEO (STAGE 3) -->
+    <div class="video-container">
+        <!-- El video muestra la transmisión de la cámara -->
+        <video id="videoElement" playsinline style="transform: scaleX(-1);" autoplay muted></video>
+        <!-- El canvas se superpone para dibujar los puntos clave de la pose -->
+        <canvas id="canvasElement"></canvas>
+    </div>
 
-        <!-- SELECTOR DE EJERCICIOS (FULL WIDTH) -->
-        <div class="mb-6 bg-white p-4 rounded-xl shadow-md">
-            <label for="exerciseSelector" class="block text-sm font-semibold text-gray-700 mb-1">Selecciona Ejercicio para Analizar:</label>
-            <select id="exerciseSelector" class="mt-1 block w-full pl-3 pr-10 py-3 text-lg border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg shadow-inner transition duration-150">
-                <option value="shoulderElevation">Elevación Hombro (Brazo Estirado)</option>
-                <option value="kneeFlexion">Flexión de Rodilla (90°)</option>
-                <option value="ankleDorsiflexion">Dorsiflexión de Tobillo (Estabilidad)</option>
-            </select>
-        </div>
+    <!-- OVERLAY DE ANÁLISIS EN VIVO (STAGE 3 UI - Flotante) -->
+    <div id="mainAnalysisOverlay" class="fixed inset-0 p-4 md:p-8 flex flex-col justify-between pointer-events-none hidden">
 
-        <!-- DESCRIPCIÓN DEL EJERCICIO (FULL WIDTH) -->
-        <section class="p-4 bg-blue-50 rounded-xl shadow-lg mb-6 border-l-4 border-blue-600">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2" id="exerciseName">Ejercicio de Elevación Lateral</h2>
-            <p class="text-base text-gray-700" id="exerciseDescription">Eleve el brazo derecho estirado lateralmente sin levantar el hombro. Mantenga el codo completamente extendido.</p>
-        </section>
+        <!-- SELECTOR OCULTO (MANTENIDO SOLO PARA INICIALIZACIÓN DE LÓGICA) -->
+        <select id="exerciseSelector" class="absolute w-0 h-0 opacity-0 pointer-events-none">
+            <option value="shoulderElevation">Elevación Hombro (Brazo Estirado)</option>
+            <option value="kneeFlexion">Flexión de Rodilla (90°)</option>
+            <option value="ankleDorsiflexion">Dorsiflexión de Tobillo (Estabilidad)</option>
+        </select>
 
-        <!-- CONTENEDOR DE VIDEO (MAXIMIZADO) -->
-        <div class="video-container mb-6">
-            <!-- El video muestra la transmisión de la cámara -->
-            <video id="videoElement" playsinline style="transform: scaleX(-1);" autoplay muted></video>
-            <!-- El canvas se superpone para dibujar los puntos clave de la pose -->
-            <canvas id="canvasElement"></canvas>
-        </div>
+        <!-- SECCIÓN SUPERIOR: UNIFICADA (App Name, Ejercicio y Botón) -->
+        <div class="flex flex-col gap-4 pointer-events-auto">
 
-        <!-- CONTROLES Y ESTADO (Grid de ancho completo) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- COLUMNA 1: BOTONES DE CONTROL -->
-            <div class="col-span-1 flex flex-col space-y-4">
-                <button id="startButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl text-lg transition shadow-xl shadow-green-300 hover:shadow-green-400" disabled>
-                    1. Iniciar Cámara
-                </button>
-                <input type="file" id="fileInput" accept="video/*" class="hidden">
-                <label for="fileInput" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-lg transition shadow-xl shadow-blue-300 hover:shadow-blue-400 text-center cursor-pointer">
-                    2. Cargar Video
-                </label>
-            </div>
-            
-            <!-- COLUMNA 2: ESTADO DEL DETECTOR -->
-            <div class="col-span-1">
-                 <div id="status-box" class="h-full flex items-center justify-center p-4 rounded-xl text-base font-semibold bg-yellow-100 text-yellow-800 text-center shadow-lg">
-                    Cargando modelos de Pose...
+            <!-- TARJETA UNIFICADA: NOMBRE APP + EJERCICIO + BOTÓN -->
+            <section class="p-4 overlay-bg rounded-xl shadow-lg border-l-4 border-blue-500 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                
+                <!-- COLUMNA IZQUIERDA: Nombre de la App -->
+                <div class="flex-shrink-0 md:border-r md:border-gray-300 md:pr-4">
+                    <h1 class="text-3xl font-extrabold text-blue-700 whitespace-nowrap" id="appName">Mobilis</h1>
+                    <p class="text-gray-600 text-sm hidden md:block">Asistente de postura en tiempo real.</p>
                 </div>
-            </div>
 
+                <!-- COLUMNA CENTRAL: Ejercicio y Descripción -->
+                <div class="flex-grow min-w-0">
+                    <h2 class="text-xl font-bold text-gray-800 mb-1" id="exerciseName">Ejercicio de Elevación Lateral</h2>
+                    <p class="text-sm text-gray-700 truncate" id="exerciseDescription">Eleve el brazo derecho estirado lateralmente sin levantar el hombro. Mantenga el codo completamente extendido.</p>
+                </div>
+                
+                <!-- COLUMNA DERECHA: Botón de Cambio -->
+                <div class="flex-shrink-0">
+                    <button id="changeExerciseButton" class="mt-3 md:mt-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-md whitespace-nowrap">
+                        Cambiar Ejercicio
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- SECCIÓN INFERIOR: ESTADO DEL EJERCICIO (Grid de ancho completo) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-auto">
+            
+            <!-- COLUMNA 1 & 2: RESERVADA -->
+            <div class="col-span-2 hidden md:block"></div> 
+            
             <!-- COLUMNA 3: ESTADO DEL EJERCICIO (SEMAFORO) -->
             <div class="col-span-1">
-                <section id="analysisState" class="h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out bg-gray-200">
+                <section id="analysisState" class="h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out overlay-bg">
                     <p class="text-sm font-bold text-gray-700 mb-1 text-center">Estado del Ejercicio:</p>
-                    <div id="exerciseStatus" class="text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-500">
-                        Esperando...
+                    <div id="exerciseStatus" class="text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600">
+                        Analizando...
                     </div>
                 </section>
             </div>
             
         </div>
-        <!-- Fin CONTROLES Y ESTADO -->
+        <!-- Fin SECCIÓN INFERIOR -->
+
     </div>
-    <!-- Fin Contenedor Principal -->
+    <!-- Fin OVERLAY DE ANÁLISIS EN VIVO -->
+    
+    <!-- MODAL DE CAMBIO DE EJERCICIO (NUEVA SOLUCIÓN) -->
+    <div id="exerciseModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-40 hidden">
+        <div class="w-full max-w-sm overlay-bg rounded-xl shadow-2xl p-6 pointer-events-auto">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Selecciona un Ejercicio</h3>
+            <div id="modalOptions" class="flex flex-col space-y-3">
+                <!-- Botones inyectados por JS para manejar la selección -->
+            </div>
+            <button id="closeModalButton" class="w-full mt-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                Cancelar
+            </button>
+        </div>
+    </div>
+    <!-- FIN MODAL -->
+    
+    <!-- PANTALLA DE CARGA Y SELECCIÓN (STAGES 1 & 2) -->
+    <div id="splashScreen" class="fixed inset-0 flex items-center justify-center bg-gray-900 transition-opacity duration-500 z-50">
+        <div class="max-w-md w-full p-8 rounded-2xl shadow-2xl bg-white text-center">
+
+            <!-- STAGE 1: CARGANDO MODELOS -->
+            <div id="modelLoadingUI">
+                <h2 class="text-3xl font-extrabold text-blue-700 mb-4">Cargando Mobilis AI...</h2>
+                <div class="h-3 w-full bg-gray-200 rounded-full overflow-hidden mb-4 shadow-inner">
+                    <div id="loadingBar" class="h-full bg-blue-500 w-1/3 animate-pulse rounded-full"></div>
+                </div>
+                <p id="loadingStatusText" class="text-gray-500">Inicializando detectores de pose y mano. Esto puede tomar unos segundos.</p>
+            </div>
+
+            <!-- STAGE 2: INICIO / SELECCIÓN (Inicialmente oculto) -->
+            <div id="startScreenUI" class="hidden">
+                <h2 class="text-3xl font-extrabold text-green-700 mb-6">Modelos Listos</h2>
+                <div class="flex flex-col space-y-4">
+                    <button id="startCameraButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-xl">
+                        Iniciar Cámara (Live)
+                    </button>
+                    <input type="file" id="fileInputStart" accept="video/*" class="hidden">
+                    <label for="fileInputStart" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-xl text-center cursor-pointer">
+                        Cargar Video
+                    </label>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <!-- Carga de Librerías de Pose Estimation -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.2.0/dist/tf.min.js"></script>
@@ -116,25 +175,38 @@
         const videoElement = document.getElementById('videoElement');
         const canvasElement = document.getElementById('canvasElement');
         const canvasCtx = canvasElement.getContext('2d');
-        const startButton = document.getElementById('startButton');
-        const fileInput = document.getElementById('fileInput');
-        const statusBox = document.getElementById('status-box');
-        const exerciseSelector = document.getElementById('exerciseSelector'); // Nuevo
-
+        const exerciseSelector = document.getElementById('exerciseSelector'); 
         
-        // UI Elements for Analyzer
+        // ELEMENTOS DE PANTALLA DE CARGA (STAGES 1 & 2)
+        const splashScreen = document.getElementById('splashScreen');
+        const modelLoadingUI = document.getElementById('modelLoadingUI');
+        const startScreenUI = document.getElementById('startScreenUI');
+        const loadingStatusText = document.getElementById('loadingStatusText');
+        const loadingBar = document.getElementById('loadingBar');
+        
+        // ELEMENTOS DE PANTALLA DE INICIO (BOTONES)
+        const startCameraButton = document.getElementById('startCameraButton');
+        const fileInputStart = document.getElementById('fileInputStart');
+        
+        // ELEMENTOS DE PANTALLA PRINCIPAL (STAGE 3)
+        const mainAnalysisOverlay = document.getElementById('mainAnalysisOverlay');
         const exerciseNameEl = document.getElementById('exerciseName');
         const exerciseDescriptionEl = document.getElementById('exerciseDescription');
         const exerciseStatusEl = document.getElementById('exerciseStatus');
         const analysisStateEl = document.getElementById('analysisState');
-
+        const changeExerciseButton = document.getElementById('changeExerciseButton');
+        const appNameEl = document.getElementById('appName');
+        
+        // ELEMENTOS DEL MODAL
+        const exerciseModal = document.getElementById('exerciseModal');
+        const modalOptions = document.getElementById('modalOptions');
+        const closeModalButton = document.getElementById('closeModalButton');
+        
         // --- VARIABLES DE ESTADO Y DETECTORES ---
         let bodyDetector;
         let handDetector;
         let animationFrameId;
         let isProcessing = false;
-        
-        // INSTANCIA DEL FILTRO DE SUAVIZADO
         let poseSmoother = null;
 
         // --- DEFINICIONES DE CONEXIÓN ---
@@ -165,20 +237,15 @@
         // --- CLASE PARA SUAVIZAR LANDMARKS (FILTRO EMA) ---
         class LandmarkSmoother {
             constructor(alpha = 0.3) {
-                this.alpha = alpha; // Factor de suavizado (0.1 = más lento/suave, 1.0 = sin suavizado)
+                this.alpha = alpha; 
                 this.smoothedKeypoints = new Map();
             }
-
             smoothKeypoint(kpName, newX, newY, newScore) {
                 if (!this.smoothedKeypoints.has(kpName)) {
-                    // Inicializa el filtro con el primer valor
                     this.smoothedKeypoints.set(kpName, { x: newX, y: newY, score: newScore });
                     return { x: newX, y: newY, score: newScore, name: kpName };
                 }
-
                 const oldKP = this.smoothedKeypoints.get(kpName);
-
-                // Aplicar EMA (Exponential Moving Average)
                 const smoothedX = (this.alpha * newX) + ((1 - this.alpha) * oldKP.x);
                 const smoothedY = (this.alpha * newY) + ((1 - this.alpha) * oldKP.y);
                 const smoothedScore = (this.alpha * newScore) + ((1 - this.alpha) * (oldKP.score || newScore));
@@ -190,37 +257,28 @@
 
             smoothLandmarks(keypoints) {
                 const smoothed = keypoints.map(kp => {
-                    // Usar el nombre como identificador. Si es de cuerpo (MoveNet), tendrá nombre.
-                    // Si no tiene nombre (manos de MediaPipe), lo ignoramos, ya que las manos tienen menos ruido.
                     if (kp.name) {
                         return this.smoothKeypoint(kp.name, kp.x, kp.y, kp.score);
                     }
-                    return kp; // Devolver keypoint sin filtrar si no tiene nombre (ej: manos)
+                    return kp; 
                 });
-
-                // Crear un objeto pose simulado con los keypoints suavizados
                 return { keypoints: smoothed };
             }
         }
         
         // --- CLASES DE ANÁLISIS ---
 
-        /** Clase Base/Utilidad para las funciones de ángulo */
         class BaseAnalyzer {
             calculateAngle(p1, p2, p3) {
                 const a = Math.sqrt(Math.pow(p2.x - p3.x, 2) + Math.pow(p2.y - p3.y, 2));
                 const b = Math.sqrt(Math.pow(p1.x - p3.x, 2) + Math.pow(p1.y - p3.y, 2));
                 const c = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-                
                 if (a === 0 || c === 0) return 0;
-                
                 const cosAngle = (a * a + c * c - b * b) / (2 * a * c);
                 const clampedCos = Math.max(-1, Math.min(1, cosAngle)); 
                 const angleInRadians = Math.acos(clampedCos);
-
                 return Math.round(angleInRadians * 180 / Math.PI);
             }
-
             getKP(keypoints, name) {
                 return keypoints.find(k => k.name === name);
             }
@@ -231,40 +289,26 @@
                 super();
                 this.name = "Elevación de Brazo (Estabilidad Hombro)";
                 this.description = "Eleve el brazo derecho estirado lateralmente sin levantar el hombro. Mantenga el codo completamente extendido.";
-                
-                this.requiredBodyLandmarks = [
-                    'right_shoulder', 'left_shoulder', 'right_elbow', 'right_wrist'
-                ];
+                this.requiredBodyLandmarks = ['right_shoulder', 'left_shoulder', 'right_elbow', 'right_wrist'];
             }
-
             analyze(bodyPose) {
                 const results = { isCorrect: false, message: "Brazos Bajos (No hay movimiento activo)" };
                 if (!bodyPose || !bodyPose.keypoints) return results;
-
                 const kp = bodyPose.keypoints;
                 const rs = this.getKP(kp, 'right_shoulder');
                 const ls = this.getKP(kp, 'left_shoulder');
                 const re = this.getKP(kp, 'right_elbow');
                 const rw = this.getKP(kp, 'right_wrist');
-
                 if (!rs || !ls || !re || !rw) return { isCorrect: false, message: "Puntos clave insuficientes para el análisis." };
-
-                // Parámetros de Validación
                 const TARGET_ELBOW_ANGLE = 180;
                 const ANGLE_TOLERANCE = 15;
                 const MIN_ARM_RAISE_Y = -10; 
                 const MAX_SHOULDER_LIFT_Y = 30; 
-
                 const currentAngle = this.calculateAngle(rs, re, rw);
                 const armIsRaised = (rs.y - re.y) > MIN_ARM_RAISE_Y;
-
-                // console.log(`[SHOULDER LOG] Angulo: ${currentAngle}°, Brazo Levantado: ${armIsRaised}, Hombro_R_Y: ${rs.y.toFixed(0)}, Hombro_L_Y: ${ls.y.toFixed(0)}`);
-
                 if (!armIsRaised) return results;
-
                 const shoulderIsStable = !(rs.y < ls.y - MAX_SHOULDER_LIFT_Y);
                 const angleIsCorrect = (currentAngle >= TARGET_ELBOW_ANGLE - ANGLE_TOLERANCE);
-                
                 if (shoulderIsStable && angleIsCorrect) {
                     results.isCorrect = true;
                     results.message = "✅ EJERCICIO CORRECTO";
@@ -282,29 +326,19 @@
                 super();
                 this.name = "Flexión de Rodilla (90°)";
                 this.description = "Doble la rodilla derecha hasta formar un ángulo de 90 grados, manteniendo la espalda recta. Ideal para rehabilitación de rodilla.";
-                this.requiredBodyLandmarks = [
-                    'right_hip', 'right_knee', 'right_ankle'
-                ];
+                this.requiredBodyLandmarks = ['right_hip', 'right_knee', 'right_ankle'];
             }
-
             analyze(bodyPose) {
                 const results = { isCorrect: false, message: "Posición Inicial (Pierna Recta)" };
                 if (!bodyPose || !bodyPose.keypoints) return results;
-
                 const kp = bodyPose.keypoints;
                 const rh = this.getKP(kp, 'right_hip');
                 const rk = this.getKP(kp, 'right_knee');
                 const ra = this.getKP(kp, 'right_ankle');
-
                 if (!rh || !rk || !ra) return { isCorrect: false, message: "Puntos clave insuficientes (Cadera, Rodilla, Tobillo)." };
-
                 const TARGET_ANGLE = 90;
                 const ANGLE_TOLERANCE = 10; 
                 const straightAngle = this.calculateAngle(rh, rk, ra);
-
-                // console.log(`[KNEE LOG] Angulo Rodilla: ${straightAngle}°`);
-
-                // Condición: Si el ángulo es recto, lo consideramos correcto.
                 if (straightAngle >= TARGET_ANGLE - ANGLE_TOLERANCE && straightAngle <= TARGET_ANGLE + ANGLE_TOLERANCE) {
                     results.isCorrect = true;
                     results.message = "✅ ¡PERFECTO! Rodilla a 90°.";
@@ -313,13 +347,10 @@
                 } else {
                     results.message = `❌ Error: Extiende la rodilla (Ángulo demasiado cerrado: ${straightAngle}°)`;
                 }
-
-                // Si está cerca de 180 (recto), vuelve al estado inicial
                 if (straightAngle > 170) {
                      results.message = "Posición Inicial (Pierna Recta)";
                      results.isCorrect = false;
                 }
-                
                 return results;
             }
         }
@@ -329,41 +360,28 @@
                 super();
                 this.name = "Dorsiflexión de Tobillo";
                 this.description = "Levante la punta del pie derecho hacia la rodilla (dorsiflexión). El movimiento debe ser lento y controlado.";
-                this.requiredBodyLandmarks = [
-                    'right_hip', 'right_knee', 'right_ankle', 'left_ankle'
-                ];
+                this.requiredBodyLandmarks = ['right_hip', 'right_knee', 'right_ankle', 'left_ankle'];
             }
-            
             analyze(bodyPose) {
                 const results = { isCorrect: false, message: "Esperando movimiento del tobillo..." };
                 if (!bodyPose || !bodyPose.keypoints) return results;
-
                 const kp = bodyPose.keypoints;
                 const rh = this.getKP(kp, 'right_hip');
                 const rk = this.getKP(kp, 'right_knee');
                 const ra = this.getKP(kp, 'right_ankle');
                 const la = this.getKP(kp, 'left_ankle');
-
                 if (!rh || !rk || !ra || !la) return { isCorrect: false, message: "Puntos clave insuficientes (Cadera, Rodilla, Tobillo)." };
-
-                // Asumimos que el tobillo izquierdo es el punto de referencia estable Y
-                const ankleIsStable = Math.abs(ra.y - la.y) < 10; // Tobillos al mismo nivel (no salto)
-                
-                // Simplificación: Monitorea si la rodilla y cadera son relativamente estables (no hay flexión de rodilla o cadera).
+                const ankleIsStable = Math.abs(ra.y - la.y) < 10; 
                 const kneeAngle = this.calculateAngle(rh, rk, ra);
                 const KNEE_FLEXION_THRESHOLD = 160; 
-
                 if (kneeAngle < KNEE_FLEXION_THRESHOLD) {
                     results.message = "❌ Error: La rodilla se está doblando. Mantén la pierna estirada.";
                 } else if (ankleIsStable) {
-                    // Si la pierna está estirada y los tobillos están estables (no hay compensación lateral), se considera correcto.
-                    // Nota: Un análisis real de dorsiflexión requeriría el punto del dedo gordo, no disponible en MoveNet.
                     results.isCorrect = true;
                     results.message = "✅ Pierna Estirada. ¡Concéntrate en mover solo el tobillo!";
                 } else {
                     results.message = "Esperando movimiento del tobillo...";
                 }
-                
                 return results;
             }
         }
@@ -375,44 +393,77 @@
             ankleDorsiflexion: new AnkleDorsiflexionAnalyzer()
         };
         
-        // Instancia del Analizador ACTIVO
         let analyzer = ANALYZERS[exerciseSelector.value];
         
-        // Función para cambiar el ejercicio
         function switchExercise(exerciseKey) {
             analyzer = ANALYZERS[exerciseKey];
             exerciseNameEl.textContent = analyzer.name;
             exerciseDescriptionEl.textContent = analyzer.description;
+            // Asegurarse de que el selector oculto refleje el cambio
+            exerciseSelector.value = exerciseKey; 
             
-            // Reiniciar estado visual y el filtro de suavizado
-            // Se debe reiniciar el filtro de suavizado para evitar artefactos entre ejercicios.
             poseSmoother = new LandmarkSmoother();
-
             exerciseStatusEl.textContent = 'Esperando...';
-            analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out bg-gray-200';
-            exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-500';
+            // Aplicar la clase de estilo consistente
+            analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out overlay-bg'; 
+            exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600'; 
         }
 
-        // Event listener para el selector
-        exerciseSelector.addEventListener('change', (e) => {
+        // Ya no necesitamos este listener, el modal gestiona el cambio
+        /* exerciseSelector.addEventListener('change', (e) => {
             switchExercise(e.target.value);
+        }); */
+        
+        // --- Lógica de Manejo del Modal ---
+        
+        function populateModal() {
+            modalOptions.innerHTML = '';
+            // Iterar sobre el objeto ANALYZERS
+            Object.keys(ANALYZERS).forEach(key => {
+                const a = ANALYZERS[key];
+                const button = document.createElement('button');
+                button.className = 'text-left px-4 py-3 bg-gray-100 hover:bg-blue-100 text-gray-800 font-semibold rounded-lg transition border border-gray-300';
+                button.innerHTML = `
+                    <p class="font-bold">${a.name}</p>
+                    <p class="text-xs text-gray-600">${a.description}</p>
+                `;
+                button.addEventListener('click', () => {
+                    switchExercise(key);
+                    exerciseModal.classList.add('hidden');
+                });
+                modalOptions.appendChild(button);
+            });
+        }
+        
+        // Evento para ABRIR MODAL
+        changeExerciseButton.addEventListener('click', () => {
+            populateModal();
+            exerciseModal.classList.remove('hidden');
+        });
+        
+        // Evento para CERRAR MODAL
+        closeModalButton.addEventListener('click', () => {
+            exerciseModal.classList.add('hidden');
         });
 
         // Configurar UI con datos del analizador al inicio
         exerciseNameEl.textContent = analyzer.name;
         exerciseDescriptionEl.textContent = analyzer.description;
+        appNameEl.textContent = 'Mobilis'; // Nombre de la App
 
 
         // --- 1. Inicialización de Modelos ---
         async function setupModels() {
-            statusBox.textContent = 'Inicializando modelos...';
+            loadingStatusText.textContent = 'Inicializando detectores de pose y mano...';
+            loadingBar.style.width = '20%';
             
-            // Inicializar el filtro de pose
             poseSmoother = new LandmarkSmoother();
 
             try {
                 // 1. Inicializar Detector de Cuerpo (MoveNet)
                 if (ENABLE_BODY_POSE) {
+                    loadingStatusText.textContent = 'Cargando MoveNet (Cuerpo)...';
+                    loadingBar.style.width = '50%';
                     const bodyModel = poseDetection.SupportedModels.MoveNet;
                     const bodyConfig = {
                         modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
@@ -423,6 +474,8 @@
 
                 // 2. Inicializar Detector de Manos (MediaPipe Hands)
                 if (ENABLE_HAND_POSE) {
+                    loadingStatusText.textContent = 'Cargando MediaPipe Hands...';
+                    loadingBar.style.width = '80%';
                     const handModel = handPoseDetection.SupportedModels.MediaPipeHands;
                     const handConfig = {
                         runtime: 'mediapipe', 
@@ -431,21 +484,17 @@
                         solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/',
                     };
                     handDetector = await handPoseDetection.createDetector(handModel, handConfig);
-                    console.log("MediaPipe Hands Detector Listo (Runtime: mediapipe).");
+                    console.log("MediaPipe Hands Detector Listo.");
                 }
 
-                if (!ENABLE_BODY_POSE && !ENABLE_HAND_POSE) {
-                     statusBox.textContent = 'Ningún modelo habilitado.';
-                     return;
-                }
-
-                statusBox.className = 'h-full flex items-center justify-center p-4 rounded-xl text-base font-semibold bg-green-100 text-green-800 text-center shadow-lg';
-                statusBox.textContent = 'Detectores listos. ¡Puedes iniciar la cámara o cargar un video!';
-                startButton.disabled = false;
+                // TRANSICIÓN DE STAGE 1 A STAGE 2
+                loadingBar.style.width = '100%';
+                modelLoadingUI.classList.add('hidden');
+                startScreenUI.classList.remove('hidden');
 
             } catch (error) {
-                statusBox.className = 'h-full flex items-center justify-center p-4 rounded-xl text-base font-semibold bg-red-100 text-red-800 text-center shadow-lg';
-                statusBox.textContent = 'Error al cargar los modelos: ' + error.message;
+                loadingStatusText.textContent = 'Error al cargar los modelos: ' + error.message;
+                modelLoadingUI.className = 'text-red-700'; // Mostrar error en color oscuro
                 console.error("Error al cargar los modelos:", error);
             }
         }
@@ -455,12 +504,9 @@
         function drawBodySkeleton(ctx, keypoints, connections, color = '#4F46E5', lineWidth = 3) {
             ctx.strokeStyle = color;
             ctx.lineWidth = lineWidth;
-            
             connections.forEach(([p1_name, p2_name]) => {
                 const p1 = keypoints.find(k => k.name === p1_name);
                 const p2 = keypoints.find(k => k.name === p2_name);
-
-                // La lógica del filtro de suavizado ya maneja que el keypoint exista y esté inicializado.
                 if (p1 && p2 && p1.score > 0.3 && p2.score > 0.3) {
                     ctx.beginPath();
                     ctx.moveTo(p1.x, p1.y);
@@ -473,11 +519,9 @@
         function drawHandSkeleton(ctx, keypoints, connections, color = '#F59E0B', lineWidth = 2) {
              ctx.strokeStyle = color;
              ctx.lineWidth = lineWidth;
-
              connections.forEach(([p1_idx, p2_idx]) => {
                  const p1 = keypoints[p1_idx];
                  const p2 = keypoints[p2_idx];
-
                  if (p1 && p2 && !isNaN(p1.x) && !isNaN(p2.x)) {
                      ctx.beginPath();
                      ctx.moveTo(p1.x, p1.y);
@@ -496,79 +540,60 @@
 
             isProcessing = true;
             
-            // Dibuja el frame de video
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
             
             let rawBodyPose = null; 
             const allKeypoints = [];
-            let bodyPose = null; // Pose filtrada
+            let bodyPose = null; 
             let handKeypoints = []; 
 
             try {
-                // --- 2.1. Detección de Cuerpo (MoveNet) ---
                 if (ENABLE_BODY_POSE && bodyDetector) {
                     const poses = await bodyDetector.estimatePoses(videoElement);
                     if (poses.length > 0) {
-                        // 1. Obtener pose cruda
                         rawBodyPose = poses[0]; 
-                        // 2. Filtrar la pose cruda
                         bodyPose = poseSmoother.smoothLandmarks(rawBodyPose.keypoints);
-                        
-                        // Dibujar con los puntos suavizados
                         drawBodySkeleton(canvasCtx, bodyPose.keypoints, BODY_CONNECTIONS);
                         allKeypoints.push(...bodyPose.keypoints);
                     }
                 }
 
-                // --- 2.2. Detección de Manos (MediaPipe Hands) ---
                 if (ENABLE_HAND_POSE && handDetector) {
                     const hands = await handDetector.estimateHands(videoElement);
-                    
                     hands.forEach(hand => {
-                        // NO aplicamos suavizado a manos, ya que el modelo MediaPipe es relativamente estable
                         drawHandSkeleton(canvasCtx, hand.keypoints, HAND_CONNECTIONS);
                         allKeypoints.push(...hand.keypoints);
                         handKeypoints.push(hand.keypoints); 
                     });
                 }
                 
-                // --- 2.3. DIBUJO Y ANÁLISIS UNIFICADO ---
                 let personDetected = bodyPose || (ENABLE_HAND_POSE && allKeypoints.length > 0);
                 
                 let analysisResults = null;
-                // Usamos la pose FILTRADA para el análisis
                 if (ENABLE_BODY_POSE && bodyPose) {
                     analysisResults = analyzer.analyze(bodyPose);
                 }
 
                 if (personDetected) {
-                    // Dibuja los puntos clave (Keypoints)
                     allKeypoints.forEach(keypoint => {
                         const isBodyKeypoint = keypoint.name !== undefined && keypoint.name !== null;
-                        
-                        // Para keypoints de cuerpo, usamos el score filtrado. Para manos, usamos la validación de coordenadas.
                         const isBodyKeypointValid = isBodyKeypoint && keypoint.score > 0.3;
                         const isHandKeypointValid = !isBodyKeypoint && !isNaN(keypoint.x);
-                        
                         const shouldDraw = isBodyKeypointValid || isHandKeypointValid;
                         
-                        let fillColor = 'red'; // Default para cuerpo
+                        let fillColor = 'red'; 
                         let radius = DEFAULT_RADIUS;
 
-                        // 1. Lógica de Resaltado del Analizador (Cuerpo)
                         if (isBodyKeypoint) {
                             if (analyzer.requiredBodyLandmarks.includes(keypoint.name)) {
-                                fillColor = ANALYZER_COLOR; // Puntos analizados en verde
-                                radius = ANALYZER_RADIUS; // Radio aumentado
+                                fillColor = ANALYZER_COLOR; 
+                                radius = ANALYZER_RADIUS; 
                             } else if (keypoint.name === 'right_shoulder' || keypoint.name === 'left_shoulder') {
-                                fillColor = 'blue'; // Hombros azules (prioridad, aunque estén en la lista de análisis)
+                                fillColor = 'blue'; 
                             }
-                        } 
-                        
-                        // 2. Lógica de Resaltado de Manos
-                        else {
-                            fillColor = '#F59E0B'; // Amber para manos (Punto de mano general)
+                        } else {
+                            fillColor = '#F59E0B'; 
                         }
 
                         if (shouldDraw) { 
@@ -579,37 +604,34 @@
                         }
                     });
                     
-                    // --- 2.4. ACTUALIZACIÓN DE LA UI DEL ANALIZADOR ---
                     if (analysisResults) {
-                        // Actualizar UI de Semáforo
                         exerciseStatusEl.textContent = analysisResults.message;
                         
-                        // Determinar color de fondo y texto basado en el resultado
-                        let bgColor = 'bg-yellow-200';
+                        let bgColor = ''; // Overlay-bg maneja el fondo blanco transparente
                         let textColor = 'text-yellow-700';
 
                         if (analysisResults.isCorrect === true) {
-                            bgColor = 'bg-green-200';
-                            textColor = 'text-green-700';
+                            bgColor = 'bg-green-100';
+                            textColor = 'text-green-800';
                         } else if (analysisResults.isCorrect === false && analysisResults.message.includes("Error")) {
-                            bgColor = 'bg-red-200';
-                            textColor = 'text-red-700';
+                            bgColor = 'bg-red-100';
+                            textColor = 'text-red-800';
                         }
                         
-                        analysisStateEl.className = `h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out ${bgColor}`;
+                        // Aplicar la clase de fondo del estado de análisis
+                        analysisStateEl.className = `h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out overlay-bg ${bgColor}`; 
                         exerciseStatusEl.className = `text-2xl sm:text-3xl font-extrabold text-center py-1 ${textColor}`;
                         
                     } else {
-                        // Limpiar métricas si el body pose no está activo
                         exerciseStatusEl.textContent = 'Análisis Deshabilitado.';
-                        analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl bg-gray-200';
-                        exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-500';
+                        analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl overlay-bg';
+                        exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600';
                     }
 
                 } else {
                     exerciseStatusEl.textContent = 'No se detectó ninguna persona.';
-                    analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl bg-gray-200';
-                    exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-500';
+                    analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl overlay-bg';
+                    exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600';
                 }
 
             } catch (error) {
@@ -618,7 +640,6 @@
                 isProcessing = false;
             }
             
-            // Sigue procesando el siguiente frame
             animationFrameId = requestAnimationFrame(detectPose);
         }
 
@@ -632,9 +653,14 @@
             if (!animationFrameId) {
                 detectPose();
             }
+            
+            // Ocultar la pantalla de inicio y mostrar la interfaz de análisis
+            splashScreen.classList.add('hidden');
+            mainAnalysisOverlay.classList.remove('hidden');
         };
 
-        startButton.addEventListener('click', async () => {
+        // Evento para INICIAR CÁMARA
+        startCameraButton.addEventListener('click', async () => {
             if (isProcessing) return;
 
             try {
@@ -646,18 +672,18 @@
                 
                 videoElement.addEventListener('loadeddata', () => {
                     initializePoseStream();
-                    statusBox.textContent = 'Cámara iniciada. Analizando pose y manos en tiempo real.';
-                    statusBox.className = 'h-full flex items-center justify-center p-4 rounded-xl text-base font-semibold bg-blue-100 text-blue-800 text-center shadow-lg';
+                    console.log('Cámara iniciada. Analizando pose y manos en tiempo real.');
                 }, { once: true });
 
             } catch (err) {
-                statusBox.textContent = 'Error al acceder a la cámara. Asegúrate de dar permisos.';
-                statusBox.className = 'h-full flex items-center justify-center p-4 rounded-xl text-base font-semibold bg-red-100 text-red-800 text-center shadow-lg';
                 console.error("Error al acceder a la cámara:", err);
+                // Usar el modal para mostrar errores en lugar de alert()
+                alert('Error al acceder a la cámara. Asegúrate de dar permisos.'); 
             }
         });
 
-        fileInput.addEventListener('change', (event) => {
+        // Evento para CARGAR VIDEO
+        fileInputStart.addEventListener('change', (event) => {
             if (isProcessing) return;
 
             const file = event.target.files[0];
@@ -667,8 +693,7 @@
 
                 videoElement.addEventListener('loadeddata', () => {
                     initializePoseStream();
-                    statusBox.textContent = `Video '${file.name}' cargado. Analizando pose y manos...`;
-                    statusBox.className = 'h-full flex items-center justify-center p-4 rounded-xl text-base font-semibold bg-blue-100 text-blue-800 text-center shadow-lg';
+                    console.log(`Video '${file.name}' cargado. Analizando pose y manos...`);
                 }, { once: true });
             }
         });

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinesis AI - Infografía: El Viaje al Movimiento Seguro</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #003366; /* Azul Profundo (Precisión, Profesional) */
+            --color-secondary: #00BFA5; /* Teal/Aqua Brillante (Progreso, Futurista) */
+            --color-background: #F0F0F0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background);
+        }
+        .step-container {
+            position: relative;
+            padding-bottom: 4rem; /* Espacio entre pasos */
+        }
+        .step-content {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease-in-out;
+            border: 2px solid var(--color-primary);
+        }
+        .step-content:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        /* Línea de conexión vertical (Teal) */
+        .connector-line {
+            position: absolute;
+            width: 4px;
+            background-color: var(--color-secondary);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .step-dot {
+            position: absolute;
+            top: 3.5rem;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px; /* Un poco más grande para destacar */
+            height: 24px;
+            background-color: var(--color-secondary);
+            border-radius: 50%;
+            border: 4px solid var(--color-primary);
+            z-index: 10;
+        }
+        /* Estilos específicos para el SVG del esqueleto (Panel 3) */
+        .skeleton-icon {
+            stroke: var(--color-secondary);
+            stroke-width: 4;
+            fill: none;
+            transition: all 0.5s ease;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- TÍTULO PRINCIPAL -->
+        <header class="text-center py-8 mb-8 bg-white shadow-xl rounded-xl border-t-4 border-[var(--color-secondary)]">
+            <h1 class="text-4xl font-extrabold text-[var(--color-primary)] mb-2">
+                Kinesis AI
+            </h1>
+            <p class="text-xl font-semibold text-gray-600">
+                El Viaje al Movimiento Seguro: Una Transformación Asistida por IA
+            </p>
+            <p class="text-sm italic font-medium text-[var(--color-secondary)] mt-2">
+                **Tecnología que cuida. IA que asegura el movimiento correcto y el progreso constante.**
+            </p>
+        </header>
+
+        <!-- CONTENEDOR DE LA INFOGRAFÍA DE LÍNEA DE TIEMPO -->
+        <div class="timeline-container relative">
+            <!-- Línea Conectora Principal -->
+            <div class="connector-line"></div>
+
+            <!-- Panel 1: Situación Inicial (El Problema) -->
+            <div class="step-container">
+                <div class="step-dot"></div>
+                <div class="relative z-20 mx-auto max-w-lg step-content p-6 sm:p-8 text-center border-b-8 border-red-500">
+                    <div class="text-5xl mb-4 text-red-500">
+                        <!-- Icono de Duda/Inseguridad: Silueta con ? -->
+                        <svg class="w-12 h-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9.09 10a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">1. La Frustración Solitaria (Antes)</h2>
+                    <p class="text-lg font-semibold text-red-600 mb-2">
+                        "¿Lo estaré haciendo bien?"
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        **Problema (Debilidad):** La práctica terapéutica en casa carece de supervisión objetiva, llevando a la inseguridad del paciente y a una baja adherencia al tratamiento.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Panel 2: El Contexto (Oportunidad) -->
+            <div class="step-container">
+                <div class="step-dot"></div>
+                <div class="relative z-20 mx-auto max-w-lg step-content p-6 sm:p-8 text-center border-b-8 border-[var(--color-secondary)]">
+                    <div class="text-5xl mb-4" style="color: var(--color-primary);">
+                         <!-- Icono de Tele-Conexión -->
+                        <svg class="w-12 h-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">2. Escalando el Cuidado Experto</h2>
+                    <p class="text-lg font-semibold text-[var(--color-primary)] mb-2">
+                        Llevando el ojo clínico al hogar.
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        **Oportunidad:** El auge de la Tele-Rehabilitación demanda soluciones costo-efectivas que permitan al profesional gestionar la terapia remota sin comprometer la calidad.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Panel 3: La Solución (Fortaleza Core) -->
+            <div class="step-container">
+                <div class="step-dot"></div>
+                <div class="relative z-20 mx-auto max-w-lg step-content p-6 sm:p-8 text-center border-b-8 border-[var(--color-secondary)]">
+                    <div class="text-5xl mb-4">
+                        <!-- SVG de Esqueleto/Pose Tracking -->
+                        <svg class="w-12 h-12 mx-auto skeleton-icon" viewBox="0 0 24 24">
+                            <circle cx="12" cy="5" r="2"></circle>
+                            <circle cx="5" cy="12" r="2"></circle>
+                            <circle cx="19" cy="12" r="2"></circle>
+                            <circle cx="8" cy="19" r="2"></circle>
+                            <circle cx="16" cy="19" r="2"></circle>
+                            <line x1="12" y1="7" x2="5" y2="12"></line>
+                            <line x1="12" y1="7" x2="19" y2="12"></line>
+                            <line x1="5" y1="12" x2="8" y2="19"></line>
+                            <line x1="19" y1="12" x2="16" y2="19"></line>
+                            <line x1="8" y1="19" x2="16" y2="19"></line>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">3. Kinesis AI: Pose Tracking de Precisión</h2>
+                    <p class="text-lg font-semibold text-[var(--color-secondary)] mb-2">
+                        Convierte tu cámara en un consultor de movimiento.
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        **Fortaleza:** Utilizamos IA para la medición de ángulos y posturas con la misma rigurosidad de la clínica, validando la ejecución correcta de cada repetición.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Panel 4: El Flujo de Valor (Fortaleza B2B) -->
+            <div class="step-container">
+                <div class="step-dot"></div>
+                <div class="relative z-20 mx-auto max-w-lg step-content p-6 sm:p-8 text-center border-b-8 border-[var(--color-primary)]">
+                    <div class="text-5xl mb-4" style="color: var(--color-primary);">
+                        <!-- Icono de Dashboard y Reporte -->
+                        <svg class="w-12 h-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">4. Adherencia Cuantificable</h2>
+                    <p class="text-lg font-semibold text-[var(--color-primary)] mb-2">
+                        Reportes detallados para una toma de decisiones basada en evidencia.
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        **Fortaleza Dual:** Conectamos al paciente con el profesional (B2B2C). Optimizamos el flujo de trabajo del fisioterapeuta con datos objetivos, demostrando un claro Retorno de Inversión (ROI).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Panel 5: El Resultado (La Misión Cumplida) -->
+            <div class="step-container">
+                <div class="step-dot"></div>
+                <div class="relative z-20 mx-auto max-w-lg step-content p-6 sm:p-8 text-center border-b-8 border-[var(--color-secondary)]">
+                    <div class="text-5xl mb-4" style="color: var(--color-secondary);">
+                        <!-- Icono de Progreso/Chequeo de Éxito -->
+                        <svg class="w-12 h-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">5. La Recuperación con Garantía</h2>
+                    <p class="text-lg font-extrabold text-[var(--color-secondary)] mb-2">
+                        ¡Progreso constante!
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        El paciente recupera la confianza y el movimiento, impulsado por el *feedback* preciso. El profesional asegura el éxito del tratamiento extendido al hogar.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Espacio final -->
+            <div class="h-10"></div>
+
+        </div>
+    </div>
+
+</body>
+</html>

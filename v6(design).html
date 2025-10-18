@@ -32,11 +32,11 @@
             top: 0;
             left: 0;
         }
-        /* ESTILO DARK MODE DE MOBILIS AI */
+        /* ESTILO DARK MODE DE MOBILIS AI (Ajustado a bordes sutiles) */
         .dark-card {
             background-color: #1E293B; /* Color de tarjeta sólido */
-            background-color: rgba(30, 41, 59, 0.9); /* Versión con 90% de opacidad para transparencia sutil */
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); 
+            background-color: rgba(30, 41, 59, 0.95); /* Opacidad al 95% para un aspecto más nítido */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Sombra más sutil */
             color: #E2E8F0; /* Texto claro */
         }
         /* Fondo de la app (Deep Navy) */
@@ -44,12 +44,12 @@
             background-color: #0D132F;
         }
 
-        /* Botón de Cámara con degradado */
+        /* Botón de Cámara con degradado (Ahora ajustado a tonos más oscuros y sobrios) */
         .camera-button {
-            background-image: linear-gradient(to right, #10B981, #06B6D4); /* Tailwind green-500 to cyan-500 */
+            background-color: #4C5972; /* Darker blue/gray */
         }
         .camera-button:hover {
-            background-image: linear-gradient(to right, #059669, #0891B2);
+            background-color: #3B475E;
         }
     </style>
 </head>
@@ -77,12 +77,10 @@
         <div class="flex flex-col gap-4 pointer-events-auto">
 
             <!-- TARJETA UNIFICADA: NOMBRE APP + EJERCICIO + BOTÓN -->
-            <!-- Usamos el nuevo estilo dark-card y border-cyan-500 -->
-            <section class="p-4 dark-card rounded-xl border-l-4 border-cyan-500 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <section class="p-4 dark-card rounded-2xl border border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 
                 <!-- COLUMNA IZQUIERDA: Nombre de la App -->
-                <!-- Aumento de tamaño de fuente a text-4xl y mayor padding (pr-6) -->
-                <div class="flex-shrink-0 md:border-r md:border-gray-700 md:pr-6">
+                <div class="flex-shrink-0 md:border-r md:border-gray-700 pr-8 pl-8 md:pr-10 py-1"> <!-- Ajuste de padding al logo -->
                     <h1 class="text-4xl font-extrabold text-cyan-400 whitespace-nowrap" id="appName">Mobilis</h1>
                 </div>
 
@@ -92,11 +90,12 @@
                     <p class="text-sm text-gray-400 truncate" id="exerciseDescription">Eleve el brazo derecho estirado lateralmente sin levantar el hombro. Mantenga el codo completamente extendido.</p>
                 </div>
                 
-                <!-- COLUMNA DERECHA: Botón de Cambio -->
-                <div class="flex-shrink-0">
-                    <button id="changeExerciseButton" class="mt-3 md:mt-0 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition shadow-md whitespace-nowrap">
+                <!-- COLUMNA DERECHA: BOTONES (Cambio) -->
+                <div class="flex-shrink-0 flex flex-col sm:flex-row gap-2 mt-3 md:mt-0">
+                    <button id="changeExerciseButton" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition shadow-md whitespace-nowrap">
                         Cambiar Ejercicio
                     </button>
+                    <!-- BOTÓN DE ANÁLISIS CON IA ELIMINADO -->
                 </div>
             </section>
         </div>
@@ -106,8 +105,8 @@
             
             <!-- COLUMNA ÚNICA: ESTADO DEL EJERCICIO (SEMAFORO) -->
             <div class="col-span-1">
-                <!-- Se ajustó el tamaño del texto principal a text-4xl y se añadió padding py-2 -->
-                <section id="analysisState" class="p-4 dark-card rounded-xl border-l-4 border-cyan-500 flex flex-col justify-center">
+                <!-- Se cambió border a border-2 (más grueso) y se añadieron clases de transición para suavizar el cambio de color -->
+                <section id="analysisState" class="p-4 dark-card rounded-2xl border-2 border-gray-700 transition duration-300 flex flex-col justify-center">
                     <div id="exerciseStatus" class="text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2">
                         Tómate tu tiempo. Cuando estés listo, comienza.
                     </div>
@@ -122,7 +121,7 @@
     
     <!-- MODAL DE CAMBIO DE EJERCICIO (Estilo Dark Card) -->
     <div id="exerciseModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-40 hidden">
-        <div class="w-full max-w-sm dark-card rounded-xl shadow-2xl p-6 pointer-events-auto border border-gray-700">
+        <div class="w-full max-w-sm dark-card rounded-2xl shadow-2xl p-6 pointer-events-auto border border-gray-700">
             <h3 class="text-xl font-bold text-gray-200 mb-4 text-center">Selecciona un Ejercicio</h3>
             <div id="modalOptions" class="flex flex-col space-y-3">
                 <!-- Botones inyectados por JS para manejar la selección -->
@@ -133,11 +132,25 @@
         </div>
     </div>
     <!-- FIN MODAL -->
+
+    <!-- MODAL DE ANÁLISIS DE IA -->
+    <div id="aiAnalysisModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-40 hidden">
+        <div class="w-full max-w-lg dark-card rounded-2xl shadow-2xl p-6 pointer-events-auto border border-gray-700">
+            <h3 class="text-2xl font-bold text-blue-400 mb-4 text-center">Análisis Personalizado de Mobilis AI ✨</h3>
+            <div id="aiAnalysisContent" class="text-base leading-relaxed mb-4 min-h-[100px] flex items-center justify-center">
+                <!-- Contenido de análisis y loading spinner aquí -->
+            </div>
+            <button id="closeAnalysisModalButton" class="w-full mt-4 py-2 bg-gray-600 hover:bg-gray-700 text-gray-200 font-semibold rounded-lg transition">
+                Cerrar
+            </button>
+        </div>
+    </div>
+    <!-- FIN MODAL DE ANÁLISIS DE IA -->
     
     <!-- PANTALLA DE CARGA Y SELECCIÓN (STAGES 1 & 2) -->
     <div id="splashScreen" class="fixed inset-0 flex items-center justify-center bg-mobilis-dark transition-opacity duration-500 z-50">
         <!-- Tarjeta de inicio con estilo dark-card y acento cyan -->
-        <div class="max-w-md w-full p-8 rounded-2xl shadow-2xl dark-card text-center border-l-4 border-cyan-500">
+        <div class="max-w-md w-full p-8 rounded-2xl shadow-2xl dark-card text-center border border-gray-700">
 
             <!-- STAGE 1: CARGANDO MODELOS -->
             <div id="modelLoadingUI">
@@ -153,13 +166,13 @@
             <div id="startScreenUI" class="hidden">
                 <h2 class="text-3xl font-extrabold text-cyan-400 mb-6">Modelos Listos</h2>
                 <div class="flex flex-col space-y-4">
-                    <!-- Botón de Cámara con degradado y sombra mejorada -->
-                    <button id="startCameraButton" class="camera-button text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-lg shadow-cyan-600/50">
+                    <!-- Botón de Cámara con estilo sobrio y dark-card-like -->
+                    <button id="startCameraButton" class="camera-button text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-lg shadow-black/50 border border-gray-700">
                         Iniciar Cámara (Live)
                     </button>
                     <input type="file" id="fileInputStart" accept="video/*" class="hidden">
-                    <!-- Botón Cargar Video con acento Cyan -->
-                    <label for="fileInputStart" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-lg shadow-cyan-600/50 text-center cursor-pointer">
+                    <!-- Botón Cargar Video con estilo sobrio y dark-card-like -->
+                    <label for="fileInputStart" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-lg shadow-black/50 text-center cursor-pointer border border-gray-700">
                         Cargar Video
                     </label>
                 </div>
@@ -177,6 +190,10 @@
 
     
     <script>
+        // --- CONSTANTES DE API GEMINI ---
+        const API_KEY = ""; // Dejar vacío; será provisto por el entorno Canvas
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        
         // --- MACROS DE HABILITACIÓN ---
         const ENABLE_BODY_POSE = true;  // MoveNet (Cuerpo: 17 puntos) - Habilitado
         const ENABLE_HAND_POSE = true;  // MediaPipe Hands (Manos: 21 puntos por mano)
@@ -206,11 +223,19 @@
         const analysisStateEl = document.getElementById('analysisState');
         const changeExerciseButton = document.getElementById('changeExerciseButton');
         const appNameEl = document.getElementById('appName');
+
+        // ELEMENTOS DE IA
+        const aiAnalysisButton = document.getElementById('aiAnalysisButton');
         
-        // ELEMENTOS DEL MODAL
+        // ELEMENTOS DEL MODAL DE EJERCICIO
         const exerciseModal = document.getElementById('exerciseModal');
         const modalOptions = document.getElementById('modalOptions');
         const closeModalButton = document.getElementById('closeModalButton');
+
+        // ELEMENTOS DEL MODAL DE ANÁLISIS IA
+        const aiAnalysisModal = document.getElementById('aiAnalysisModal');
+        const aiAnalysisContent = document.getElementById('aiAnalysisContent');
+        const closeAnalysisModalButton = document.getElementById('closeAnalysisModalButton');
         
         // --- VARIABLES DE ESTADO Y DETECTORES ---
         let bodyDetector;
@@ -415,12 +440,12 @@
             
             exerciseStatusEl.textContent = analyzer.analyze(null).message; 
             
-            // Reestablecer clases base de estado (dark-card y borde inicial cyan)
-            analysisStateEl.className = 'p-4 dark-card rounded-xl border-l-4 border-cyan-500 flex flex-col justify-center';
+            // Reestablecer clases base de estado (dark-card y borde inicial)
+            analysisStateEl.className = 'p-4 dark-card rounded-2xl border-2 border-gray-700 transition duration-300 flex flex-col justify-center';
             exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2'; 
         }
 
-        // --- Lógica de Manejo del Modal ---
+        // --- Lógica de Manejo del Modal de Ejercicio ---
         
         function populateModal() {
             modalOptions.innerHTML = '';
@@ -450,6 +475,72 @@
             exerciseModal.classList.add('hidden');
         });
 
+        // --- Lógica de Manejo del Análisis con IA (Gemini API) ---
+        
+        async function generatePostSessionAnalysis(exerciseName, lastFeedback) {
+            // Mostrar modal y estado de carga
+            aiAnalysisContent.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-3"></div><p class="text-gray-400">Mobilis AI está generando tu resumen...</p></div>';
+            aiAnalysisModal.classList.remove('hidden');
+
+            const systemPrompt = `Eres un terapeuta físico de IA, cuyo tono debe ser siempre empático, de apoyo incondicional y alineado con la teoría del apego seguro. Tu objetivo es generar un resumen motivacional post-sesión y un punto de enfoque para el siguiente ejercicio.
+            Instrucciones:
+            1. Genera un párrafo de 3-4 frases máximo.
+            2. El tono debe ser cálido, alentador y centrado en el progreso.
+            3. Evita jerga técnica excesiva; usa lenguaje humano.
+            4. Termina con un foco de atención simple para la próxima vez.`;
+            
+            const userQuery = `Acabo de terminar el ejercicio de "${exerciseName}". Mi último feedback fue: "${lastFeedback}". Genera mi resumen post-sesión.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            try {
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                     throw new Error(`Error ${response.status}: La API falló o excedió el límite de llamadas.`);
+                }
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "No fue posible generar el análisis. Inténtalo de nuevo.";
+                
+                // Mostrar resultado
+                aiAnalysisContent.innerHTML = `<p class="text-gray-200">${text.replace(/\n/g, '<br>')}</p>`;
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                aiAnalysisContent.innerHTML = `<p class="text-red-400 text-center">Error de conexión con Mobilis AI. Por favor, revisa la consola o inténtalo más tarde.</p>`;
+            }
+        }
+        
+        // Event listener para el nuevo botón de Análisis IA (ELIMINADO DEL HTML, MANTENIDO EN JS POR SI ES NECESARIO REINTRODUCIRLO)
+        // aiAnalysisButton.addEventListener('click', () => {
+        //     const exerciseName = exerciseNameEl.textContent;
+        //     const lastFeedback = exerciseStatusEl.textContent;
+            
+        //     // Verificar si el estado es neutral o de inicio
+        //     if (lastFeedback.includes("Tómate tu tiempo") || lastFeedback.includes("Postura inicial") || lastFeedback.includes("No se detectó ninguna persona")) {
+        //         aiAnalysisModal.classList.remove('hidden');
+        //         aiAnalysisContent.innerHTML = `<p class="text-gray-400 text-center py-4">Necesitas iniciar y completar parte del ejercicio antes de recibir un análisis personalizado.</p>`;
+        //     } else {
+        //         generatePostSessionAnalysis(exerciseName, lastFeedback);
+        //     }
+        // });
+
+        // Event listener para cerrar el modal de análisis IA
+        closeAnalysisModalButton.addEventListener('click', () => {
+            aiAnalysisModal.classList.add('hidden');
+        });
+        
+        
         // Configuración inicial de UI
         exerciseNameEl.textContent = analyzer.name;
         exerciseDescriptionEl.textContent = analyzer.description;
@@ -585,8 +676,9 @@
                     analysisResults = analyzer.analyze(bodyPose);
                 }
                 
-                // Limpiar clases de estado antes de aplicar las nuevas
-                analysisStateEl.classList.remove('border-green-400', 'border-red-500', 'border-cyan-500'); 
+                // Limpiar clases de color de borde y reestablecer la clase base
+                analysisStateEl.classList.remove('border-green-500', 'border-red-500');
+                analysisStateEl.classList.add('border-gray-700'); 
 
                 if (personDetected) {
                     allKeypoints.forEach(keypoint => {
@@ -622,38 +714,36 @@
                         
                         let textColor = 'text-gray-400';
 
+                        // LÓGICA DE COLOR DE BORDE Y TEXTO ACTUALIZADA
                         if (analysisResults.isCorrect === true) {
-                            // Éxito: Borde verde y texto verde vibrante
-                            analysisStateEl.classList.add('border-green-400');
                             textColor = 'text-green-400';
+                            analysisStateEl.classList.remove('border-gray-700');
+                            analysisStateEl.classList.add('border-green-500'); // Borde verde para Éxito
                         } else if (analysisResults.isCorrect === false && (analysisResults.message.includes("Ojo") || analysisResults.message.includes("Suavemente") || analysisResults.message.includes("Recuerda") || analysisResults.message.includes("Casi"))) {
-                            // Error/Advertencia: Borde rojo y texto rojo vibrante
-                            analysisStateEl.classList.add('border-red-500');
                             textColor = 'text-red-400';
+                            analysisStateEl.classList.remove('border-gray-700');
+                            analysisStateEl.classList.add('border-red-500'); // Borde rojo para Error/Advertencia
                         } else {
-                            // Estado Neutral/Inicial: Borde cyan (el inicial) y texto gris
-                            analysisStateEl.classList.add('border-cyan-500'); 
                             textColor = 'text-gray-400';
+                            // Permanece border-gray-700 para Neutral
                         }
                         
-                        analysisStateEl.classList.remove('border-blue-500'); // Asegurar que el borde Lightsquid se fue.
-                        // Ajuste aquí a text-4xl
                         exerciseStatusEl.className = `text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 ${textColor} py-2`;
                         
                     } else {
                         exerciseStatusEl.textContent = 'Analizando...';
-                        analysisStateEl.classList.add('border-cyan-500');
+                        // Permanece border-gray-700 para Analizando
                         exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2';
                     }
 
                 } else {
                     exerciseStatusEl.textContent = 'No se detectó ninguna persona. Ajusta la cámara.';
-                    analysisStateEl.classList.add('border-cyan-500');
+                    // Permanece border-gray-700 para No detectado
                     exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2';
                 }
                 
                 // Asegurarse de que las clases base de la sección analysisState se mantengan
-                analysisStateEl.classList.add('p-4', 'dark-card', 'rounded-xl', 'shadow-lg', 'border-l-4', 'flex', 'flex-col', 'justify-center');
+                analysisStateEl.classList.add('p-4', 'dark-card', 'rounded-2xl', 'shadow-lg', 'border-2', 'flex', 'flex-col', 'justify-center');
 
 
             } catch (error) {
@@ -700,6 +790,7 @@
             } catch (err) {
                 console.error("Error al acceder a la cámara:", err);
                 // Usar el modal para mostrar errores en lugar de alert()
+                // Nota: Usar alert() es temporal aquí, el entorno debe usar un modal custom.
                 alert('Error al acceder a la cámara. Asegúrate de dar permisos.'); 
             }
         });

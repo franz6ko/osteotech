@@ -43,6 +43,13 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
             color: #1F2937; /* Texto oscuro */
         }
+
+        /* Estilo para el fondo de la pantalla de carga (más sutil) */
+        .splash-bg {
+            background-color: rgba(255, 255, 255, 0.5); 
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
     </style>
 </head>
 <body class="bg-gray-900 font-sans h-screen overflow-hidden">
@@ -92,18 +99,16 @@
             </section>
         </div>
 
-        <!-- SECCIÓN INFERIOR: ESTADO DEL EJERCICIO (Grid de ancho completo) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-auto">
+        <!-- SECCIÓN INFERIOR: ESTADO DEL EJERCICIO (Ahora con la misma estética de banner superior) -->
+        <div class="grid grid-cols-1 gap-6 pointer-events-auto">
             
-            <!-- COLUMNA 1 & 2: RESERVADA -->
-            <div class="col-span-2 hidden md:block"></div> 
-            
-            <!-- COLUMNA 3: ESTADO DEL EJERCICIO (SEMAFORO) -->
+            <!-- COLUMNA ÚNICA: ESTADO DEL EJERCICIO (SEMAFORO) -->
             <div class="col-span-1">
-                <section id="analysisState" class="h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out overlay-bg">
-                    <p class="text-sm font-bold text-gray-700 mb-1 text-center">Estado del Ejercicio:</p>
-                    <div id="exerciseStatus" class="text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600">
-                        Analizando...
+                <!-- CLASES INICIALES: overlay-bg, border-l-4 border-blue-500 -->
+                <section id="analysisState" class="p-4 overlay-bg rounded-xl shadow-lg border-l-4 border-blue-500 flex flex-col justify-center gap-2">
+                    <p class="text-base sm:text-lg font-bold text-gray-700 mb-0 text-center uppercase tracking-wider">Estado del Ejercicio</p>
+                    <div id="exerciseStatus" class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center px-4 text-gray-600">
+                        Tómate tu tiempo. Cuando estés listo, comienza.
                     </div>
                 </section>
             </div>
@@ -129,8 +134,10 @@
     <!-- FIN MODAL -->
     
     <!-- PANTALLA DE CARGA Y SELECCIÓN (STAGES 1 & 2) -->
-    <div id="splashScreen" class="fixed inset-0 flex items-center justify-center bg-gray-900 transition-opacity duration-500 z-50">
-        <div class="max-w-md w-full p-8 rounded-2xl shadow-2xl bg-white text-center">
+    <!-- Se cambia el fondo para que sea un blur de la aplicación subyacente (splash-bg) -->
+    <div id="splashScreen" class="fixed inset-0 flex items-center justify-center splash-bg transition-opacity duration-500 z-50">
+        <!-- Se aplica overlay-bg a la tarjeta interior para el efecto frosted glass -->
+        <div class="max-w-md w-full p-8 rounded-2xl shadow-2xl overlay-bg text-center border-l-4 border-blue-500">
 
             <!-- STAGE 1: CARGANDO MODELOS -->
             <div id="modelLoadingUI">
@@ -138,18 +145,19 @@
                 <div class="h-3 w-full bg-gray-200 rounded-full overflow-hidden mb-4 shadow-inner">
                     <div id="loadingBar" class="h-full bg-blue-500 w-1/3 animate-pulse rounded-full"></div>
                 </div>
-                <p id="loadingStatusText" class="text-gray-500">Inicializando detectores de pose y mano. Esto puede tomar unos segundos.</p>
+                <p id="loadingStatusText" class="text-gray-600">Inicializando detectores de pose y mano. Esto puede tomar unos segundos.</p>
             </div>
 
             <!-- STAGE 2: INICIO / SELECCIÓN (Inicialmente oculto) -->
             <div id="startScreenUI" class="hidden">
                 <h2 class="text-3xl font-extrabold text-green-700 mb-6">Modelos Listos</h2>
                 <div class="flex flex-col space-y-4">
-                    <button id="startCameraButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-xl">
+                    <!-- Botones actualizados para estilo más moderno -->
+                    <button id="startCameraButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-lg shadow-green-400/50">
                         Iniciar Cámara (Live)
                     </button>
                     <input type="file" id="fileInputStart" accept="video/*" class="hidden">
-                    <label for="fileInputStart" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-xl text-center cursor-pointer">
+                    <label for="fileInputStart" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow-lg shadow-blue-400/50 text-center cursor-pointer">
                         Cargar Video
                     </label>
                 </div>
@@ -292,30 +300,31 @@
                 this.requiredBodyLandmarks = ['right_shoulder', 'left_shoulder', 'right_elbow', 'right_wrist'];
             }
             analyze(bodyPose) {
-                const results = { isCorrect: false, message: "Brazos Bajos (No hay movimiento activo)" };
+                // CAMBIO: Mensaje inicial enfocado en la acción de levantar el brazo
+                const results = { isCorrect: false, message: "Comencemos: Levanta tu brazo derecho lentamente hacia un lado." };
                 if (!bodyPose || !bodyPose.keypoints) return results;
                 const kp = bodyPose.keypoints;
                 const rs = this.getKP(kp, 'right_shoulder');
                 const ls = this.getKP(kp, 'left_shoulder');
                 const re = this.getKP(kp, 'right_elbow');
                 const rw = this.getKP(kp, 'right_wrist');
-                if (!rs || !ls || !re || !rw) return { isCorrect: false, message: "Puntos clave insuficientes para el análisis." };
+                if (!rs || !ls || !re || !rw) return { isCorrect: false, message: "Ajusta la cámara para verte mejor." };
                 const TARGET_ELBOW_ANGLE = 180;
                 const ANGLE_TOLERANCE = 15;
                 const MIN_ARM_RAISE_Y = -10; 
                 const MAX_SHOULDER_LIFT_Y = 30; 
                 const currentAngle = this.calculateAngle(rs, re, rw);
                 const armIsRaised = (rs.y - re.y) > MIN_ARM_RAISE_Y;
-                if (!armIsRaised) return results;
+                if (!armIsRaised) return { isCorrect: false, message: "Comencemos: Levanta tu brazo derecho lentamente hacia un lado." };
                 const shoulderIsStable = !(rs.y < ls.y - MAX_SHOULDER_LIFT_Y);
                 const angleIsCorrect = (currentAngle >= TARGET_ELBOW_ANGLE - ANGLE_TOLERANCE);
                 if (shoulderIsStable && angleIsCorrect) {
                     results.isCorrect = true;
-                    results.message = "✅ EJERCICIO CORRECTO";
+                    results.message = "✨ ¡Muy bien! Te ves estable y fuerte. Sigue así.";
                 } else if (!shoulderIsStable) {
-                    results.message = "❌ Error: ¡No eleves el hombro!";
+                    results.message = "Ojo: Tu hombro está buscando ayuda. Relájalo y concéntrate solo en el brazo.";
                 } else { 
-                    results.message = `❌ Error: Mantén el brazo estirado (Actual: ${currentAngle}°)`;
+                    results.message = `Recuerda estirar el codo por completo (Actual: ${currentAngle}°). Tómate tu tiempo.`;
                 }
                 return results;
             }
@@ -329,26 +338,26 @@
                 this.requiredBodyLandmarks = ['right_hip', 'right_knee', 'right_ankle'];
             }
             analyze(bodyPose) {
-                const results = { isCorrect: false, message: "Posición Inicial (Pierna Recta)" };
+                const results = { isCorrect: false, message: "Postura inicial: Busca tu centro y respira hondo." };
                 if (!bodyPose || !bodyPose.keypoints) return results;
                 const kp = bodyPose.keypoints;
                 const rh = this.getKP(kp, 'right_hip');
                 const rk = this.getKP(kp, 'right_knee');
                 const ra = this.getKP(kp, 'right_ankle');
-                if (!rh || !rk || !ra) return { isCorrect: false, message: "Puntos clave insuficientes (Cadera, Rodilla, Tobillo)." };
+                if (!rh || !rk || !ra) return { isCorrect: false, message: "Ajusta la cámara para verte mejor." };
                 const TARGET_ANGLE = 90;
                 const ANGLE_TOLERANCE = 10; 
                 const straightAngle = this.calculateAngle(rh, rk, ra);
                 if (straightAngle >= TARGET_ANGLE - ANGLE_TOLERANCE && straightAngle <= TARGET_ANGLE + ANGLE_TOLERANCE) {
                     results.isCorrect = true;
-                    results.message = "✅ ¡PERFECTO! Rodilla a 90°.";
+                    results.message = "✨ ¡Perfecto! La rodilla está segura y estable a 90°.";
                 } else if (straightAngle > TARGET_ANGLE + ANGLE_TOLERANCE) {
-                    results.message = `❌ Error: Flexiona más la rodilla (Actual: ${straightAngle}°)`;
+                    results.message = `Casi: La rodilla necesita un poquito más de flexión para sentirse segura (Actual: ${straightAngle}°).`;
                 } else {
-                    results.message = `❌ Error: Extiende la rodilla (Ángulo demasiado cerrado: ${straightAngle}°)`;
+                    results.message = `Suavemente, extiende un poco la rodilla. Evita cerrar demasiado el ángulo (Actual: ${straightAngle}°).`;
                 }
                 if (straightAngle > 170) {
-                     results.message = "Posición Inicial (Pierna Recta)";
+                     results.message = "Postura inicial: Busca tu centro y respira hondo.";
                      results.isCorrect = false;
                 }
                 return results;
@@ -363,24 +372,24 @@
                 this.requiredBodyLandmarks = ['right_hip', 'right_knee', 'right_ankle', 'left_ankle'];
             }
             analyze(bodyPose) {
-                const results = { isCorrect: false, message: "Esperando movimiento del tobillo..." };
+                const results = { isCorrect: false, message: "Tómate tu tiempo. Cuando estés listo, comienza." };
                 if (!bodyPose || !bodyPose.keypoints) return results;
                 const kp = bodyPose.keypoints;
                 const rh = this.getKP(kp, 'right_hip');
                 const rk = this.getKP(kp, 'right_knee');
                 const ra = this.getKP(kp, 'right_ankle');
                 const la = this.getKP(kp, 'left_ankle');
-                if (!rh || !rk || !ra || !la) return { isCorrect: false, message: "Puntos clave insuficientes (Cadera, Rodilla, Tobillo)." };
+                if (!rh || !rk || !ra || !la) return { isCorrect: false, message: "Ajusta la cámara para verte mejor." };
                 const ankleIsStable = Math.abs(ra.y - la.y) < 10; 
                 const kneeAngle = this.calculateAngle(rh, rk, ra);
                 const KNEE_FLEXION_THRESHOLD = 160; 
                 if (kneeAngle < KNEE_FLEXION_THRESHOLD) {
-                    results.message = "❌ Error: La rodilla se está doblando. Mantén la pierna estirada.";
+                    results.message = "Suavemente: Tu rodilla se está doblando un poco. Intenta mantener la pierna larga y estirada.";
                 } else if (ankleIsStable) {
                     results.isCorrect = true;
-                    results.message = "✅ Pierna Estirada. ¡Concéntrate en mover solo el tobillo!";
+                    results.message = "✨ ¡Foco en el tobillo! Estás manteniendo el resto del cuerpo tranquilo, excelente trabajo.";
                 } else {
-                    results.message = "Esperando movimiento del tobillo...";
+                    results.message = "Tómate tu tiempo. Cuando estés listo, comienza.";
                 }
                 return results;
             }
@@ -403,17 +412,15 @@
             exerciseSelector.value = exerciseKey; 
             
             poseSmoother = new LandmarkSmoother();
-            exerciseStatusEl.textContent = 'Esperando...';
-            // Aplicar la clase de estilo consistente
-            analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out overlay-bg'; 
-            exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600'; 
+            
+            // Usamos el mensaje inicial del nuevo analizador
+            exerciseStatusEl.textContent = analyzer.analyze(null).message; 
+            
+            // Reinicia el estado visual
+            analysisStateEl.className = 'p-4 overlay-bg rounded-xl shadow-lg border-l-4 border-blue-500 flex flex-col justify-center gap-2';
+            exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-5xl font-extrabold text-center px-4 text-gray-600'; 
         }
 
-        // Ya no necesitamos este listener, el modal gestiona el cambio
-        /* exerciseSelector.addEventListener('change', (e) => {
-            switchExercise(e.target.value);
-        }); */
-        
         // --- Lógica de Manejo del Modal ---
         
         function populateModal() {
@@ -450,6 +457,10 @@
         exerciseNameEl.textContent = analyzer.name;
         exerciseDescriptionEl.textContent = analyzer.description;
         appNameEl.textContent = 'Mobilis'; // Nombre de la App
+        
+        // Configurar el estado inicial para que refleje el mensaje del analizador por defecto
+        exerciseStatusEl.textContent = analyzer.analyze(null).message;
+        analysisStateEl.className = 'p-4 overlay-bg rounded-xl shadow-lg border-l-4 border-blue-500 flex flex-col justify-center gap-2';
 
 
         // --- 1. Inicialización de Modelos ---
@@ -494,7 +505,13 @@
 
             } catch (error) {
                 loadingStatusText.textContent = 'Error al cargar los modelos: ' + error.message;
-                modelLoadingUI.className = 'text-red-700'; // Mostrar error en color oscuro
+                // Mantener el estilo overlay-bg y cambiar el color del texto para el error
+                document.querySelector('#splashScreen .overlay-bg h2').classList.remove('text-blue-700');
+                document.querySelector('#splashScreen .overlay-bg h2').classList.add('text-red-700');
+                loadingStatusText.classList.remove('text-gray-600');
+                loadingStatusText.classList.add('text-red-600');
+                loadingBar.classList.add('bg-red-500');
+                loadingBar.classList.remove('bg-blue-500', 'animate-pulse');
                 console.error("Error al cargar los modelos:", error);
             }
         }
@@ -574,6 +591,9 @@
                 if (ENABLE_BODY_POSE && bodyPose) {
                     analysisResults = analyzer.analyze(bodyPose);
                 }
+                
+                // Limpiar clases de estado antes de aplicar las nuevas
+                analysisStateEl.classList.remove('border-green-500', 'border-red-500'); 
 
                 if (personDetected) {
                     allKeypoints.forEach(keypoint => {
@@ -607,32 +627,42 @@
                     if (analysisResults) {
                         exerciseStatusEl.textContent = analysisResults.message;
                         
-                        let bgColor = ''; // Overlay-bg maneja el fondo blanco transparente
-                        let textColor = 'text-yellow-700';
+                        let textColor = 'text-gray-600';
 
                         if (analysisResults.isCorrect === true) {
-                            bgColor = 'bg-green-100';
-                            textColor = 'text-green-800';
-                        } else if (analysisResults.isCorrect === false && analysisResults.message.includes("Error")) {
-                            bgColor = 'bg-red-100';
-                            textColor = 'text-red-800';
+                            // Éxito: Borde verde y texto verde
+                            analysisStateEl.classList.add('border-green-500');
+                            analysisStateEl.classList.remove('border-blue-500'); // Quitar borde inicial
+                            textColor = 'text-green-600';
+                        } else if (analysisResults.isCorrect === false && (analysisResults.message.includes("Ojo") || analysisResults.message.includes("Suavemente") || analysisResults.message.includes("Recuerda") || analysisResults.message.includes("Casi"))) {
+                            // Error/Advertencia: Borde rojo y texto rojo
+                            analysisStateEl.classList.add('border-red-500');
+                            analysisStateEl.classList.remove('border-blue-500'); // Quitar borde inicial
+                            textColor = 'text-red-600';
+                        } else {
+                            // Estado Neutral/Inicial: Borde azul (el inicial) y texto gris
+                            analysisStateEl.classList.add('border-blue-500'); 
+                            textColor = 'text-gray-600';
                         }
                         
-                        // Aplicar la clase de fondo del estado de análisis
-                        analysisStateEl.className = `h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl transition duration-300 ease-in-out overlay-bg ${bgColor}`; 
-                        exerciseStatusEl.className = `text-2xl sm:text-3xl font-extrabold text-center py-1 ${textColor}`;
+                        // NOTA: La clase overlay-bg se mantiene y proporciona la transparencia.
+                        exerciseStatusEl.className = `text-3xl sm:text-4xl md:text-5xl font-extrabold text-center px-4 ${textColor}`;
                         
                     } else {
-                        exerciseStatusEl.textContent = 'Análisis Deshabilitado.';
-                        analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl overlay-bg';
-                        exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600';
+                        exerciseStatusEl.textContent = 'Analizando...';
+                        analysisStateEl.classList.add('border-blue-500');
+                        exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-5xl font-extrabold text-center px-4 text-gray-600';
                     }
 
                 } else {
-                    exerciseStatusEl.textContent = 'No se detectó ninguna persona.';
-                    analysisStateEl.className = 'h-full flex flex-col justify-center p-4 rounded-xl shadow-2xl overlay-bg';
-                    exerciseStatusEl.className = 'text-2xl sm:text-3xl font-extrabold text-center py-1 text-gray-600';
+                    exerciseStatusEl.textContent = 'No se detectó ninguna persona. Ajusta la cámara.';
+                    analysisStateEl.classList.add('border-blue-500');
+                    exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-5xl font-extrabold text-center px-4 text-gray-600';
                 }
+                
+                // Asegurarse de que las clases base de la sección analysisState se mantengan
+                analysisStateEl.classList.add('p-4', 'overlay-bg', 'rounded-xl', 'shadow-lg', 'border-l-4', 'flex', 'flex-col', 'justify-center', 'gap-2');
+
 
             } catch (error) {
                 console.error("Error durante la detección de pose:", error);

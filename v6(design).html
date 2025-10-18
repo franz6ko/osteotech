@@ -80,19 +80,23 @@
             <section class="p-4 dark-card rounded-2xl border border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 
                 <!-- COLUMNA IZQUIERDA: Nombre de la App -->
-                <div class="flex-shrink-0 md:border-r md:border-gray-700 pr-8 pl-8 md:pr-10 py-1"> <!-- Ajuste de padding al logo -->
+                <!-- En móvil, ocupa el ancho completo para centrar -->
+                <div class="flex-shrink-0 md:border-r md:border-gray-700 pr-8 md:pr-10 py-1 mb-2 md:mb-0 w-full md:w-auto text-center md:text-left"> 
                     <h1 class="text-4xl font-extrabold text-cyan-400 whitespace-nowrap" id="appName">Mobilis</h1>
                 </div>
 
                 <!-- COLUMNA CENTRAL: Ejercicio y Descripción -->
-                <div class="flex-grow min-w-0">
-                    <h2 class="text-xl font-bold text-gray-200 mb-1" id="exerciseName">Ejercicio de Elevación Lateral</h2>
-                    <p class="text-sm text-gray-400 truncate" id="exerciseDescription">Eleve el brazo derecho estirado lateralmente sin levantar el hombro. Mantenga el codo completamente extendido.</p>
+                <div class="flex-grow min-w-0 mb-2 md:mb-0 w-full md:w-auto">
+                    <!-- Tamaño de fuente ajustado a sm:text-lg para mejor visibilidad móvil -->
+                    <h2 class="text-xl sm:text-lg font-bold text-gray-200 mb-1" id="exerciseName">Ejercicio de Elevación Lateral</h2>
+                    <!-- Se eliminó 'truncate' para que el texto fluya -->
+                    <p class="text-sm text-gray-400" id="exerciseDescription">Eleve el brazo derecho estirado lateralmente sin levantar el hombro. Mantenga el codo completamente extendido.</p>
                 </div>
                 
                 <!-- COLUMNA DERECHA: BOTONES (Cambio) -->
-                <div class="flex-shrink-0 flex flex-col sm:flex-row gap-2 mt-3 md:mt-0">
-                    <button id="changeExerciseButton" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition shadow-md whitespace-nowrap">
+                <!-- En móvil, ocupa el ancho completo y el botón también es full width -->
+                <div class="flex-shrink-0 flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-0 md:mt-0">
+                    <button id="changeExerciseButton" class="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition shadow-md whitespace-nowrap">
                         Cambiar Ejercicio
                     </button>
                     <!-- BOTÓN DE ANÁLISIS CON IA ELIMINADO -->
@@ -107,7 +111,8 @@
             <div class="col-span-1">
                 <!-- Se cambió border a border-2 (más grueso) y se añadieron clases de transición para suavizar el cambio de color -->
                 <section id="analysisState" class="p-4 dark-card rounded-2xl border-2 border-gray-700 transition duration-300 flex flex-col justify-center">
-                    <div id="exerciseStatus" class="text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2">
+                    <!-- Tamaño de fuente ajustado a text-2xl en móviles (sm:text-4xl) para asegurar que el mensaje quepa -->
+                    <div id="exerciseStatus" class="text-2xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2">
                         Tómate tu tiempo. Cuando estés listo, comienza.
                     </div>
                 </section>
@@ -442,7 +447,7 @@
             
             // Reestablecer clases base de estado (dark-card y borde inicial)
             analysisStateEl.className = 'p-4 dark-card rounded-2xl border-2 border-gray-700 transition duration-300 flex flex-col justify-center';
-            exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2'; 
+            exerciseStatusEl.className = 'text-2xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2'; 
         }
 
         // --- Lógica de Manejo del Modal de Ejercicio ---
@@ -728,18 +733,19 @@
                             // Permanece border-gray-700 para Neutral
                         }
                         
-                        exerciseStatusEl.className = `text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 ${textColor} py-2`;
+                        // Ajuste de tamaño de fuente: base text-2xl, md:text-4xl
+                        exerciseStatusEl.className = `text-2xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 ${textColor} py-2`;
                         
                     } else {
                         exerciseStatusEl.textContent = 'Analizando...';
                         // Permanece border-gray-700 para Analizando
-                        exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2';
+                        exerciseStatusEl.className = 'text-2xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2';
                     }
 
                 } else {
                     exerciseStatusEl.textContent = 'No se detectó ninguna persona. Ajusta la cámara.';
                     // Permanece border-gray-700 para No detectado
-                    exerciseStatusEl.className = 'text-3xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2';
+                    exerciseStatusEl.className = 'text-2xl sm:text-4xl md:text-4xl font-extrabold text-center px-4 text-gray-400 py-2';
                 }
                 
                 // Asegurarse de que las clases base de la sección analysisState se mantengan
